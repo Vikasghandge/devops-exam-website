@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Login — DevOps Exam Portal</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{--bg:#0a0e1a;--surface:#111827;--border:#1e2d40;--accent:#f59e0b;--text:#e2e8f0;--muted:#64748b;--error:#f87171;--mono:'JetBrains Mono',monospace;--sans:'DM Sans',sans-serif;}
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{background:var(--bg);font-family:var(--sans);min-height:100vh;display:flex;align-items:center;justify-content:center;}
+  body::before{content:'';position:fixed;top:-50%;left:-50%;width:200%;height:200%;
+    background:radial-gradient(ellipse at 50% 30%,rgba(245,158,11,0.06) 0%,transparent 50%);pointer-events:none;}
+  .grid-bg{position:fixed;inset:0;
+    background-image:linear-gradient(rgba(245,158,11,0.03) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(245,158,11,0.03) 1px,transparent 1px);
+    background-size:40px 40px;pointer-events:none;}
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:16px;
+    padding:48px 40px;width:100%;max-width:400px;position:relative;z-index:1;
+    animation:fadeUp 0.5s ease;}
+  @keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+  .badge{display:inline-flex;align-items:center;gap:6px;
+    background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.25);
+    color:var(--accent);font-family:var(--mono);font-size:11px;
+    padding:4px 12px;border-radius:20px;margin-bottom:20px;letter-spacing:0.05em;}
+  .badge::before{content:'';width:6px;height:6px;background:var(--accent);
+    border-radius:50%;animation:pulse 2s infinite;}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.3}}
+  h1{font-size:24px;font-weight:600;color:var(--text);margin-bottom:6px;}
+  .subtitle{color:var(--muted);font-size:14px;margin-bottom:32px;}
+  .field{margin-bottom:20px;}
+  label{display:block;font-size:12px;font-family:var(--mono);color:var(--muted);
+    text-transform:uppercase;letter-spacing:0.08em;margin-bottom:8px;}
+  input[type=password]{width:100%;background:var(--bg);border:1px solid var(--border);
+    border-radius:8px;padding:12px 16px;color:var(--text);
+    font-family:var(--mono);font-size:15px;outline:none;transition:border-color 0.2s;}
+  input[type=password]:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(245,158,11,0.1);}
+  input::placeholder{color:var(--muted);}
+  .btn{width:100%;background:var(--accent);color:#0a0e1a;border:none;border-radius:8px;
+    padding:14px;font-family:var(--sans);font-size:15px;font-weight:700;
+    cursor:pointer;transition:all 0.2s;margin-top:4px;}
+  .btn:hover{background:#fbbf24;transform:translateY(-1px);}
+  .alert{background:rgba(248,113,113,0.1);border:1px solid rgba(248,113,113,0.3);
+    color:var(--error);padding:12px 16px;border-radius:8px;font-size:13px;margin-bottom:18px;}
+  .back{text-align:center;margin-top:20px;font-size:13px;color:var(--muted);}
+  .back a{color:var(--accent);text-decoration:none;}
+  .lock{font-size:32px;margin-bottom:16px;text-align:center;}
+</style>
+</head>
+<body>
+<div class="grid-bg"></div>
+<div class="card">
+  <div class="lock">🔐</div>
+  <div style="text-align:center">
+    <div class="badge">Admin Portal</div>
+  </div>
+  <h1 style="text-align:center">Admin access</h1>
+  <p class="subtitle" style="text-align:center">Enter admin password to manage questions</p>
+
+  {% if error %}
+  <div class="alert">{{ error }}</div>
+  {% endif %}
+
+  <form method="POST">
+    <div class="field">
+      <label>Admin Password</label>
+      <input type="password" name="password" placeholder="Enter admin password" required autofocus>
+    </div>
+    <button type="submit" class="btn">Access Admin Panel →</button>
+  </form>
+  <div class="back"><a href="/dashboard">← Back to dashboard</a></div>
+</div>
+</body>
+</html>
