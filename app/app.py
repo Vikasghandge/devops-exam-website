@@ -204,5 +204,102 @@ def logout():
     session.clear()
     return redirect(url_for('login'))
 
+
+# ── Leaderboard route ─────────────────────────────────────
+@app.route('/leaderboard')
+@login_required
+def leaderboard():
+    try:
+        db = get_db()
+        with db.cursor() as cur:
+
+            # Top 10 — best percentage, ties broken by fastest time
+            cur.execute("""
+                SELECT
+                    r.user_id,
+                    u.username,
+                    MAX(r.percentage)                          AS best_pct,
+                    MAX(r.score)                               AS best_score,
+                    MAX(r.total)                               AS total,
+                    MIN(CASE WHEN r.percentage = sub.max_pct
+                             THEN r.time_taken END)            AS fastest_time,
+                    COUNT(r.id)                                AS attempts
+                FROM results r
+                JOIN users u ON r.user_id = u.id
+                JOIN (
+                    SELECT user_id, MAX(percentage) AS max_pct
+                    FROM results GROUP BY user_id
+                ) sub ON r.user_id = sub.user_id
+                GROUP BY r.user_id, u.username
+                ORDER BY best_pct DESC, fastest_time ASC
+                LIMIT 10
+            """)
+            rows = cur.fetchall()
+
+            # Stats
+            cur.execute("SELECT COUNT(DISTINCT user_id) AS cnt FROM results")
+            total_players = cur.fetchone()['cnt']
+
+            cur.execute("SELECT COUNT(*) AS cnt FROM results")
+            total_exams = cur.fetchone()['cnt']
+
+            cur.execute("SELECT MAX(percentage) AS top FROM results")
+            top_score_row = cur.fetchone()
+            top_score = round(top_score_row['top']) if top_score_row['top'] else None
+
+            # Current user rank
+            cur.execute("""
+                SELECT COUNT(*) + 1 AS rnk
+                FROM (
+                    SELECT user_id, MAX(percentage) AS best_pct
+                    FROM results GROUP BY user_id
+                ) ranked
+                WHERE best_pct > (
+                    SELECT COALESCE(MAX(percentage), 0)
+                    FROM results WHERE user_id = %s
+                )
+            """, (session['user_id'],))
+            my_rank_row = cur.fetchone()
+            my_rank = my_rank_row['rnk'] if my_rank_row else None
+
+            # Current user best score
+            cur.execute("""
+                SELECT MAX(percentage) AS best_pct
+                FROM results WHERE user_id = %s
+            """, (session['user_id'],))
+            my_pct_row = cur.fetchone()
+            my_best_pct = my_pct_row['best_pct'] if my_pct_row and my_pct_row['best_pct'] else 0
+
+        db.close()
+
+        # Format display names — "Vikas G."
+        leaderboard = []
+        for row in rows:
+            parts = row['username'].strip().split()
+            if len(parts) >= 2:
+                display = f"{parts[0]} {parts[-1][0]}."
+            else:
+                display = parts[0] if parts else 'User'
+            row['display_name'] = display
+            leaderboard.append(row)
+
+    except Exception as e:
+        leaderboard    = []
+        total_players  = 0
+        total_exams    = 0
+        top_score      = None
+        my_rank        = None
+        my_best_pct    = 0
+
+    return render_template('leaderboard.html',
+        leaderboard   = leaderboard,
+        total_players = total_players,
+        total_exams   = total_exams,
+        top_score     = top_score,
+        my_rank       = my_rank,
+        my_best_pct   = my_best_pct
+    )
+
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
