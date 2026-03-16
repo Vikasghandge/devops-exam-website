@@ -1,0 +1,15 @@
+
+App login:
+  Email    : vikas@example.com
+  Password : vikas123
+
+Admin panel:
+  URL      : /admin/login
+  Password : admin@devops2024
+
+Database:
+  Host     : db (inside Docker network)
+  User     : examuser
+  Password : exampass
+  DB name  : examdb
+  Root pass: rootpass
