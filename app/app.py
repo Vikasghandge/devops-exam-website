@@ -1,4 +1,3 @@
-
 from flask import Flask, render_template, request, redirect, url_for, session, jsonify
 import pymysql, os, random, json
 from datetime import datetime, timedelta
@@ -6,6 +5,11 @@ from functools import wraps
 
 app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY', 'devops-exam-secret-2024')
+app.config['SESSION_COOKIE_SECURE'] = False
+app.config['SESSION_COOKIE_HTTPONLY'] = True
+app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
+
+app.jinja_env.filters['fromjson'] = json.loads
 
 # ── DB connection ─────────────────────────────────────────
 def get_db():
@@ -38,7 +42,7 @@ def index():
 def login():
     error = None
     if request.method == 'POST':
-        email = request.form.get('email', '').strip()
+        email    = request.form.get('email', '').strip()
         password = request.form.get('password', '').strip()
         if not email or not password:
             error = 'Please fill in all fields.'
@@ -46,13 +50,16 @@ def login():
             try:
                 db = get_db()
                 with db.cursor() as cur:
-                    cur.execute("SELECT * FROM users WHERE email=%s AND password=%s", (email, password))
+                    cur.execute(
+                        "SELECT * FROM users WHERE email=%s AND password=%s",
+                        (email, password)
+                    )
                     user = cur.fetchone()
                 db.close()
                 if user:
-                    session['user_id'] = user['id']
+                    session['user_id']  = user['id']
                     session['username'] = user['username']
-                    session['email'] = user['email']
+                    session['email']    = user['email']
                     return redirect(url_for('dashboard'))
                 else:
                     error = 'Invalid email or password.'
@@ -62,7 +69,7 @@ def login():
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
-    error = None
+    error   = None
     success = None
     if request.method == 'POST':
         username = request.form.get('username', '').strip()
@@ -118,9 +125,15 @@ def start_exam():
     except Exception as e:
         return f"Error loading questions: {str(e)}"
 
+    # ── FIX — parse options JSON string into dict ──────────
+    for q in questions:
+        if isinstance(q['options'], str):
+            q['options'] = json.loads(q['options'])
+
     session['exam_questions'] = [q['id'] for q in questions]
     session['exam_start']     = datetime.now().isoformat()
     session['exam_answers']   = {}
+
     return render_template('exam.html', questions=questions, duration=20)
 
 @app.route('/submit-exam', methods=['POST'])
@@ -129,14 +142,14 @@ def submit_exam():
     if 'exam_questions' not in session:
         return redirect(url_for('dashboard'))
 
-    answers      = request.form
-    q_ids        = session.get('exam_questions', [])
-    start_time   = datetime.fromisoformat(session.get('exam_start'))
-    time_taken   = int((datetime.now() - start_time).total_seconds())
+    answers    = request.form
+    q_ids      = session.get('exam_questions', [])
+    start_time = datetime.fromisoformat(session.get('exam_start'))
+    time_taken = int((datetime.now() - start_time).total_seconds())
 
     try:
-        db = get_db()
-        score = 0
+        db      = get_db()
+        score   = 0
         results = []
         with db.cursor() as cur:
             for qid in q_ids:
@@ -144,13 +157,18 @@ def submit_exam():
                 q = cur.fetchone()
                 if not q:
                     continue
-                user_ans    = answers.get(f'q_{qid}', None)
-                is_correct  = (user_ans == q['correct_answer'])
+                # parse options for result page
+                if isinstance(q['options'], str):
+                    q['options'] = json.loads(q['options'])
+
+                user_ans   = answers.get(f'q_{qid}', None)
+                is_correct = (user_ans == q['correct_answer'])
                 if is_correct:
                     score += 1
+
                 results.append({
                     'question':       q['question'],
-                    'options':        json.loads(q['options']),
+                    'options':        q['options'],
                     'user_answer':    user_ans,
                     'correct_answer': q['correct_answer'],
                     'explanation':    q.get('explanation', ''),
@@ -159,12 +177,14 @@ def submit_exam():
 
             total      = len(q_ids)
             percentage = round((score / total) * 100) if total else 0
+
             cur.execute("""
                 INSERT INTO results (user_id, score, total, percentage, time_taken)
                 VALUES (%s, %s, %s, %s, %s)
             """, (session['user_id'], score, total, percentage, time_taken))
             db.commit()
         db.close()
+
     except Exception as e:
         return f"Error saving results: {str(e)}"
 
@@ -172,7 +192,8 @@ def submit_exam():
     session.pop('exam_start', None)
 
     return render_template('result.html',
-        score=score, total=total,
+        score=score,
+        total=total,
         percentage=percentage,
         time_taken=time_taken,
         results=results
