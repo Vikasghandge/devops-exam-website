@@ -1,1 +1,55 @@
 
+version: '3.8'
+
+services:
+
+  db:
+    image: mysql:8.0
+    container_name: exam-db
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpass
+      MYSQL_DATABASE:      examdb
+      MYSQL_USER:          examuser
+      MYSQL_PASSWORD:      exampass
+    volumes:
+      - mysql-data:/var/lib/mysql
+      - ./mysql/init.sql:/docker-entrypoint-initdb.d/init.sql
+    ports:
+      - "3306:3306"
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "examuser", "-pexampass"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 40s
+    networks:
+      - exam-network
+
+  app:
+    build:
+      context: ./app
+      dockerfile: Dockerfile
+    container_name: exam-app
+    restart: unless-stopped
+    environment:
+      DB_HOST:     db
+      DB_USER:     examuser
+      DB_PASSWORD: exampass
+      DB_NAME:     examdb
+      SECRET_KEY:  devops-exam-secret-key-2024
+    ports:
+      - "5000:5000"
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - exam-network
+
+volumes:
+  mysql-data:
+    driver: local
+
+networks:
+  exam-network:
+    driver: bridge
