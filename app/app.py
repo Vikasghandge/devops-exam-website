@@ -301,5 +301,178 @@ def leaderboard():
     )
 
 
+
+# ── Admin config ──────────────────────────────────────────
+ADMIN_PASSWORD = os.environ.get('ADMIN_PASSWORD', 'admin@devops2024')
+
+def admin_required(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        if not session.get('is_admin'):
+            return redirect(url_for('admin_login'))
+        return f(*args, **kwargs)
+    return decorated
+
+# ── Admin login ───────────────────────────────────────────
+@app.route('/admin/login', methods=['GET', 'POST'])
+def admin_login():
+    error = None
+    if request.method == 'POST':
+        password = request.form.get('password', '').strip()
+        if password == ADMIN_PASSWORD:
+            session['is_admin'] = True
+            return redirect(url_for('admin_dashboard'))
+        else:
+            error = 'Invalid admin password.'
+    return render_template('admin_login.html', error=error)
+
+@app.route('/admin/logout')
+def admin_logout():
+    session.pop('is_admin', None)
+    return redirect(url_for('admin_login'))
+
+# ── Admin dashboard — view all questions ──────────────────
+@app.route('/admin')
+@admin_required
+def admin_dashboard():
+    try:
+        db = get_db()
+        with db.cursor() as cur:
+            cur.execute("SELECT * FROM questions ORDER BY id ASC")
+            questions = cur.fetchall()
+            cur.execute("SELECT COUNT(*) AS cnt FROM questions")
+            total_q = cur.fetchone()['cnt']
+            cur.execute("SELECT COUNT(*) AS cnt FROM results")
+            total_results = cur.fetchone()['cnt']
+            cur.execute("SELECT COUNT(*) AS cnt FROM users")
+            total_users = cur.fetchone()['cnt']
+        db.close()
+        for q in questions:
+            if isinstance(q['options'], str):
+                q['options'] = json.loads(q['options'])
+    except Exception as e:
+        questions = []
+        total_q = total_results = total_users = 0
+    return render_template('admin_dashboard.html',
+        questions=questions,
+        total_q=total_q,
+        total_results=total_results,
+        total_users=total_users
+    )
+
+# ── Admin add question ────────────────────────────────────
+@app.route('/admin/add', methods=['GET', 'POST'])
+@admin_required
+def admin_add():
+    error = None
+    success = None
+    if request.method == 'POST':
+        question   = request.form.get('question', '').strip()
+        opt_a      = request.form.get('opt_a', '').strip()
+        opt_b      = request.form.get('opt_b', '').strip()
+        opt_c      = request.form.get('opt_c', '').strip()
+        opt_d      = request.form.get('opt_d', '').strip()
+        correct    = request.form.get('correct', '').strip().upper()
+        explanation= request.form.get('explanation', '').strip()
+        category   = request.form.get('category', 'DevOps').strip()
+
+        if not all([question, opt_a, opt_b, opt_c, opt_d, correct]):
+            error = 'All fields except explanation are required.'
+        elif correct not in ['A', 'B', 'C', 'D']:
+            error = 'Correct answer must be A, B, C or D.'
+        else:
+            options = json.dumps({"A": opt_a, "B": opt_b, "C": opt_c, "D": opt_d})
+            try:
+                db = get_db()
+                with db.cursor() as cur:
+                    cur.execute("""
+                        INSERT INTO questions
+                        (question, options, correct_answer, explanation, category)
+                        VALUES (%s, %s, %s, %s, %s)
+                    """, (question, options, correct, explanation, category))
+                    db.commit()
+                db.close()
+                success = 'Question added successfully!'
+            except Exception as e:
+                error = f'Database error: {str(e)}'
+    return render_template('admin_form.html',
+        mode='add', error=error, success=success, q=None)
+
+# ── Admin edit question ───────────────────────────────────
+@app.route('/admin/edit/<int:qid>', methods=['GET', 'POST'])
+@admin_required
+def admin_edit(qid):
+    error = None
+    success = None
+    try:
+        db = get_db()
+        with db.cursor() as cur:
+            if request.method == 'POST':
+                question    = request.form.get('question', '').strip()
+                opt_a       = request.form.get('opt_a', '').strip()
+                opt_b       = request.form.get('opt_b', '').strip()
+                opt_c       = request.form.get('opt_c', '').strip()
+                opt_d       = request.form.get('opt_d', '').strip()
+                correct     = request.form.get('correct', '').strip().upper()
+                explanation = request.form.get('explanation', '').strip()
+                category    = request.form.get('category', 'DevOps').strip()
+
+                if not all([question, opt_a, opt_b, opt_c, opt_d, correct]):
+                    error = 'All fields except explanation are required.'
+                elif correct not in ['A', 'B', 'C', 'D']:
+                    error = 'Correct answer must be A, B, C or D.'
+                else:
+                    options = json.dumps({"A": opt_a, "B": opt_b, "C": opt_c, "D": opt_d})
+                    cur.execute("""
+                        UPDATE questions
+                        SET question=%s, options=%s, correct_answer=%s,
+                            explanation=%s, category=%s
+                        WHERE id=%s
+                    """, (question, options, correct, explanation, category, qid))
+                    db.commit()
+                    success = 'Question updated successfully!'
+
+            cur.execute("SELECT * FROM questions WHERE id=%s", (qid,))
+            q = cur.fetchone()
+            if q and isinstance(q['options'], str):
+                q['options'] = json.loads(q['options'])
+        db.close()
+    except Exception as e:
+        error = f'Database error: {str(e)}'
+        q = None
+    return render_template('admin_form.html',
+        mode='edit', error=error, success=success, q=q, qid=qid)
+
+# ── Admin delete question ─────────────────────────────────
+@app.route('/admin/delete/<int:qid>', methods=['POST'])
+@admin_required
+def admin_delete(qid):
+    try:
+        db = get_db()
+        with db.cursor() as cur:
+            cur.execute("DELETE FROM questions WHERE id=%s", (qid,))
+            db.commit()
+        db.close()
+    except Exception as e:
+        pass
+    return redirect(url_for('admin_dashboard'))
+
+# ── Admin preview question ────────────────────────────────
+@app.route('/admin/preview/<int:qid>')
+@admin_required
+def admin_preview(qid):
+    try:
+        db = get_db()
+        with db.cursor() as cur:
+            cur.execute("SELECT * FROM questions WHERE id=%s", (qid,))
+            q = cur.fetchone()
+            if q and isinstance(q['options'], str):
+                q['options'] = json.loads(q['options'])
+        db.close()
+    except Exception as e:
+        q = None
+    return render_template('admin_preview.html', q=q)
+
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
