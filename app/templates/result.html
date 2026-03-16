@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -7,146 +6,213 @@
 <title>Exam Result — DevOps Portal</title>
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
-  :root{--bg:#0a0e1a;--surface:#111827;--surface2:#162032;--border:#1e2d40;--accent:#00d4aa;--accent2:#3b82f6;--text:#e2e8f0;--muted:#64748b;--pass:#00d4aa;--fail:#f87171;--mono:'JetBrains Mono',monospace;--sans:'DM Sans',sans-serif;}
+  :root{--bg:#0a0e1a;--surface:#111827;--surface2:#162032;--border:#1e2d40;
+    --accent:#f59e0b;--teal:#00d4aa;--blue:#3b82f6;--text:#e2e8f0;--muted:#64748b;
+    --error:#f87171;--success:#34d399;
+    --mono:'JetBrains Mono',monospace;--sans:'DM Sans',sans-serif;}
   *{box-sizing:border-box;margin:0;padding:0;}
-  body{background:var(--bg);font-family:var(--sans);color:var(--text);min-height:100vh;}
-  nav{display:flex;align-items:center;justify-content:space-between;padding:20px 40px;border-bottom:1px solid var(--border);}
+  body{background:var(--bg);font-family:var(--sans);min-height:100vh;color:var(--text);}
+
+  nav{display:flex;align-items:center;justify-content:space-between;
+    padding:18px 36px;border-bottom:1px solid var(--border);}
   .nav-brand{font-family:var(--mono);font-size:13px;color:var(--accent);}
-  .nav-links{display:flex;gap:12px;}
-  .nav-link{text-decoration:none;font-size:13px;padding:8px 16px;border:1px solid var(--border);border-radius:8px;color:var(--muted);transition:all 0.2s;font-family:var(--mono);}
-  .nav-link:hover{color:var(--text);border-color:var(--muted);}
-  .nav-link.primary{background:var(--accent);color:#0a0e1a;border-color:var(--accent);font-weight:600;}
-  .nav-link.primary:hover{background:#00f0c0;}
-  .container{max-width:800px;margin:0 auto;padding:40px 20px;}
-  .result-hero{text-align:center;margin-bottom:40px;animation:fadeUp 0.5s ease;}
-  @keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
-  .result-badge{display:inline-block;padding:8px 24px;border-radius:24px;font-family:var(--mono);font-size:13px;font-weight:600;margin-bottom:20px;}
-  .badge-pass{background:rgba(0,212,170,0.15);border:1px solid rgba(0,212,170,0.3);color:var(--pass);}
-  .badge-fail{background:rgba(248,113,113,0.15);border:1px solid rgba(248,113,113,0.3);color:var(--fail);}
-  .score-ring{width:140px;height:140px;margin:0 auto 20px;position:relative;}
-  .score-ring svg{transform:rotate(-90deg);}
-  .ring-bg{fill:none;stroke:var(--surface2);stroke-width:12;}
-  .ring-fill{fill:none;stroke-width:12;stroke-linecap:round;transition:stroke-dashoffset 1.5s ease;}
-  .score-text{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;}
+  .nav-btn{text-decoration:none;font-size:12px;padding:6px 14px;
+    border:1px solid var(--border);border-radius:7px;color:var(--muted);
+    transition:all .2s;font-family:var(--mono);}
+  .nav-btn:hover{color:var(--text);border-color:var(--muted);}
+
+  .container{max-width:900px;margin:0 auto;padding:32px 20px 60px;}
+
+  /* Score Hero */
+  .score-hero{text-align:center;padding:40px 20px 32px;margin-bottom:28px;}
+  .score-circle{width:130px;height:130px;border-radius:50%;margin:0 auto 20px;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    border:3px solid;}
+  .score-circle.pass{border-color:var(--teal);background:rgba(0,212,170,0.08);}
+  .score-circle.fail{border-color:var(--error);background:rgba(248,113,113,0.08);}
   .score-pct{font-family:var(--mono);font-size:30px;font-weight:600;}
-  .score-lbl{font-size:11px;color:var(--muted);}
-  .result-hero h2{font-size:26px;font-weight:600;margin-bottom:6px;}
-  .result-hero p{color:var(--muted);font-size:15px;}
-  .stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:36px;animation:fadeUp 0.6s ease;}
-  .stat{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:18px;text-align:center;}
-  .stat-n{font-family:var(--mono);font-size:22px;font-weight:600;margin-bottom:4px;}
-  .stat-l{font-size:12px;color:var(--muted);}
-  .green{color:var(--pass);}
-  .red{color:var(--fail);}
-  .blue{color:var(--accent2);}
-  .amber{color:#f59e0b;}
-  .review-section{animation:fadeUp 0.7s ease;}
-  .review-header{font-family:var(--mono);font-size:12px;color:var(--muted);letter-spacing:0.06em;margin-bottom:14px;}
-  .q-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:22px 26px;margin-bottom:14px;}
-  .q-card.correct{border-left:3px solid var(--pass);}
-  .q-card.wrong{border-left:3px solid var(--fail);}
-  .q-top{display:flex;align-items:center;gap:10px;margin-bottom:12px;}
-  .q-num{font-family:var(--mono);font-size:11px;color:var(--muted);background:var(--surface2);padding:3px 8px;border-radius:5px;}
-  .q-status{font-size:11px;font-weight:600;padding:3px 10px;border-radius:5px;font-family:var(--mono);}
-  .status-correct{background:rgba(0,212,170,0.12);color:var(--pass);}
-  .status-wrong{background:rgba(248,113,113,0.12);color:var(--fail);}
-  .status-skip{background:rgba(100,116,139,0.15);color:var(--muted);}
-  .q-text{font-size:15px;margin-bottom:14px;line-height:1.5;}
-  .answers{display:flex;flex-direction:column;gap:8px;margin-bottom:12px;}
-  .ans-row{display:flex;align-items:center;gap:10px;font-size:13px;padding:8px 12px;border-radius:7px;}
-  .ans-correct{background:rgba(0,212,170,0.08);border:1px solid rgba(0,212,170,0.2);color:var(--pass);}
-  .ans-wrong{background:rgba(248,113,113,0.08);border:1px solid rgba(248,113,113,0.2);color:var(--fail);}
-  .ans-neutral{background:var(--surface2);color:var(--muted);}
-  .ans-icon{font-size:14px;flex-shrink:0;}
-  .explanation{background:rgba(59,130,246,0.06);border:1px solid rgba(59,130,246,0.15);border-radius:8px;padding:12px 16px;font-size:13px;color:#93c5fd;line-height:1.6;}
-  .expl-label{font-family:var(--mono);font-size:10px;color:var(--accent2);letter-spacing:0.08em;margin-bottom:5px;}
-  @media(max-width:600px){.stats-row{grid-template-columns:repeat(2,1fr);}}
+  .score-pct.pass{color:var(--teal);}
+  .score-pct.fail{color:var(--error);}
+  .score-label{font-size:11px;color:var(--muted);font-family:var(--mono);}
+  .result-title{font-size:22px;font-weight:600;margin-bottom:6px;}
+  .result-sub{font-size:14px;color:var(--muted);}
+
+  /* Certificate CTA */
+  .cert-cta{
+    background: linear-gradient(135deg, rgba(212,175,55,0.08), rgba(212,175,55,0.03));
+    border: 1px solid rgba(212,175,55,0.35);
+    border-radius: 14px;
+    padding: 24px 28px;
+    margin-bottom: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+  }
+  .cert-cta-left{ display:flex; align-items:center; gap:16px; }
+  .cert-cta-icon{
+    width:52px;height:52px;border-radius:12px;
+    background:rgba(212,175,55,0.12);border:1px solid rgba(212,175,55,0.25);
+    display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0;
+  }
+  .cert-cta-title{ font-size:16px;font-weight:600;color:#d4af37;margin-bottom:4px; }
+  .cert-cta-sub{ font-size:13px;color:rgba(212,175,55,0.6); }
+  .cert-dl-btn{
+    text-decoration:none;
+    background:linear-gradient(135deg,#d4af37,#f0c040);
+    color:#0b1120;
+    font-family:var(--mono);font-size:12px;font-weight:600;
+    letter-spacing:0.08em;text-transform:uppercase;
+    padding:12px 22px;border-radius:9px;
+    white-space:nowrap;
+    transition:all .2s;
+    box-shadow:0 4px 20px rgba(212,175,55,0.3);
+    flex-shrink:0;
+  }
+  .cert-dl-btn:hover{transform:translateY(-1px);box-shadow:0 8px 28px rgba(212,175,55,0.45);}
+
+  /* Stats row */
+  .stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:28px;}
+  .stat{background:var(--surface);border:1px solid var(--border);border-radius:10px;
+    padding:16px 18px;text-align:center;}
+  .stat-val{font-family:var(--mono);font-size:20px;font-weight:600;margin-bottom:4px;}
+  .stat-lbl{font-size:12px;color:var(--muted);}
+
+  /* Results list */
+  .section-title{font-size:15px;font-weight:600;margin-bottom:14px;
+    display:flex;align-items:center;gap:8px;}
+  .q-card{background:var(--surface);border:1px solid var(--border);
+    border-radius:12px;padding:18px 20px;margin-bottom:12px;}
+  .q-card.correct{border-left:3px solid var(--teal);}
+  .q-card.wrong{border-left:3px solid var(--error);}
+  .q-header{display:flex;justify-content:space-between;align-items:flex-start;
+    margin-bottom:12px;gap:12px;}
+  .q-text{font-size:14px;line-height:1.5;flex:1;}
+  .q-badge{font-family:var(--mono);font-size:10px;font-weight:600;padding:3px 10px;
+    border-radius:6px;white-space:nowrap;flex-shrink:0;}
+  .badge-correct{background:rgba(52,211,153,0.12);color:var(--success);}
+  .badge-wrong{background:rgba(248,113,113,0.12);color:var(--error);}
+  .options-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:10px;}
+  .opt{font-size:12px;padding:6px 10px;border-radius:6px;
+    border:1px solid var(--border);color:var(--muted);display:flex;gap:6px;}
+  .opt.correct-opt{background:rgba(52,211,153,0.08);border-color:rgba(52,211,153,0.4);color:var(--success);}
+  .opt.user-wrong{background:rgba(248,113,113,0.08);border-color:rgba(248,113,113,0.4);color:var(--error);}
+  .opt-key{font-family:var(--mono);font-weight:600;flex-shrink:0;}
+  .explanation{font-size:12px;color:var(--muted);line-height:1.6;
+    padding:10px 12px;background:var(--surface2);border-radius:6px;
+    border-left:2px solid rgba(245,158,11,0.3);}
+  .exp-label{font-family:var(--mono);font-size:10px;color:var(--accent);
+    margin-bottom:4px;letter-spacing:0.06em;}
+
+  .action-row{display:flex;gap:12px;justify-content:center;margin-top:32px;}
+  .action-btn{text-decoration:none;padding:11px 24px;border-radius:9px;
+    font-size:13px;font-weight:500;transition:all .2s;font-family:var(--mono);}
+  .btn-primary{background:var(--teal);color:#0a0e1a;font-weight:600;}
+  .btn-primary:hover{background:#00f0c0;}
+  .btn-secondary{border:1px solid var(--border);color:var(--muted);}
+  .btn-secondary:hover{color:var(--text);border-color:var(--muted);}
 </style>
 </head>
 <body>
 
 <nav>
   <div class="nav-brand">// DEVOPS EXAM PORTAL</div>
-  <div class="nav-links">
-    <a href="/dashboard" class="nav-link">Dashboard</a>
-    <a href="/start-exam" class="nav-link primary">Retake Exam</a>
-  </div>
+  <a href="/dashboard" class="nav-btn">Dashboard</a>
 </nav>
 
 <div class="container">
 
-  <div class="result-hero">
-    <div class="result-badge {% if percentage >= 60 %}badge-pass{% else %}badge-fail{% endif %}">
-      {% if percentage >= 80 %}EXCELLENT — PASS{% elif percentage >= 60 %}PASS{% else %}FAIL — TRY AGAIN{% endif %}
+  <!-- Score Hero -->
+  <div class="score-hero">
+    <div class="score-circle {{ 'pass' if percentage >= 85 else 'fail' }}">
+      <span class="score-pct {{ 'pass' if percentage >= 85 else 'fail' }}">{{ percentage }}%</span>
+      <span class="score-label">{{ score }}/{{ total }}</span>
     </div>
-
-    <div class="score-ring">
-      <svg width="140" height="140" viewBox="0 0 140 140">
-        <circle class="ring-bg" cx="70" cy="70" r="58"/>
-        <circle class="ring-fill" cx="70" cy="70" r="58"
-          stroke="{% if percentage >= 60 %}#00d4aa{% else %}#f87171{% endif %}"
-          stroke-dasharray="364.4"
-          stroke-dashoffset="{{ (364.4 * (1 - percentage/100))|round(1) }}"
-          id="ring"/>
-      </svg>
-      <div class="score-text">
-        <span class="score-pct {% if percentage >= 60 %}green{% else %}red{% endif %}">{{ percentage|int }}%</span>
-        <span class="score-lbl">score</span>
-      </div>
-    </div>
-
-    <h2>{% if percentage >= 80 %}Outstanding work!{% elif percentage >= 60 %}Good job, you passed!{% else %}Keep practising!{% endif %}</h2>
-    <p>You scored {{ score }} out of {{ total }} questions correctly</p>
-  </div>
-
-  <div class="stats-row">
-    <div class="stat"><div class="stat-n green">{{ score }}</div><div class="stat-l">Correct</div></div>
-    <div class="stat"><div class="stat-n red">{{ total - score }}</div><div class="stat-l">Wrong</div></div>
-    <div class="stat"><div class="stat-n blue">{{ total }}</div><div class="stat-l">Total</div></div>
-    <div class="stat">
-      <div class="stat-n amber">
-        {% if time_taken %}{{ time_taken // 60 }}m {{ time_taken % 60 }}s{% else %}—{% endif %}
-      </div>
-      <div class="stat-l">Time taken</div>
-    </div>
-  </div>
-
-  <div class="review-section">
-    <div class="review-header">// ANSWER REVIEW</div>
-    {% for r in results %}
-    <div class="q-card {% if r.is_correct %}correct{% else %}wrong{% endif %}">
-      <div class="q-top">
-        <span class="q-num">Q{{ loop.index }}</span>
-        {% if r.is_correct %}
-        <span class="q-status status-correct">CORRECT</span>
-        {% elif not r.user_answer %}
-        <span class="q-status status-skip">SKIPPED</span>
-        {% else %}
-        <span class="q-status status-wrong">WRONG</span>
-        {% endif %}
-      </div>
-      <div class="q-text">{{ r.question }}</div>
-      <div class="answers">
-        {% for key, val in r.options.items() %}
-        {% if key == r.correct_answer and key == r.user_answer %}
-        <div class="ans-row ans-correct"><span class="ans-icon">✓</span><strong>{{ key }}.</strong> {{ val }} <span style="margin-left:auto;font-size:11px;">Your answer — correct</span></div>
-        {% elif key == r.correct_answer %}
-        <div class="ans-row ans-correct"><span class="ans-icon">✓</span><strong>{{ key }}.</strong> {{ val }} <span style="margin-left:auto;font-size:11px;">Correct answer</span></div>
-        {% elif key == r.user_answer %}
-        <div class="ans-row ans-wrong"><span class="ans-icon">✗</span><strong>{{ key }}.</strong> {{ val }} <span style="margin-left:auto;font-size:11px;">Your answer</span></div>
-        {% else %}
-        <div class="ans-row ans-neutral"><span class="ans-icon" style="opacity:0.3">○</span><strong>{{ key }}.</strong> {{ val }}</div>
-        {% endif %}
-        {% endfor %}
-      </div>
-      {% if r.explanation %}
-      <div class="explanation">
-        <div class="expl-label">EXPLANATION</div>
-        {{ r.explanation }}
-      </div>
+    <div class="result-title">
+      {% if percentage >= 85 %}🎉 Excellent Work!
+      {% elif percentage >= 60 %}👍 Good Effort!
+      {% else %}📚 Keep Practicing!
       {% endif %}
     </div>
-    {% endfor %}
+    <div class="result-sub">
+      {% if percentage >= 85 %}You've passed with distinction and earned a certificate!
+      {% elif percentage >= 60 %}You passed! Score 85% or above to earn a certificate.
+      {% else %}You need 85% or above to pass. Keep studying and try again!
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Certificate CTA (only if passed with 85%+) -->
+  {% if percentage >= 85 %}
+  <div class="cert-cta">
+    <div class="cert-cta-left">
+      <div class="cert-cta-icon">🏆</div>
+      <div>
+        <div class="cert-cta-title">Your Certificate is Ready!</div>
+        <div class="cert-cta-sub">Download your DevOps Professional Certificate as a PNG image</div>
+      </div>
+    </div>
+    <a href="/certificate?score={{ score }}&total={{ total }}&percentage={{ percentage }}&time_taken={{ time_taken }}" class="cert-dl-btn">
+      ⬇ Get Certificate
+    </a>
+  </div>
+  {% endif %}
+
+  <!-- Stats -->
+  <div class="stats-row">
+    <div class="stat">
+      <div class="stat-val" style="color:var(--teal)">{{ score }}</div>
+      <div class="stat-lbl">Correct answers</div>
+    </div>
+    <div class="stat">
+      <div class="stat-val" style="color:var(--error)">{{ total - score }}</div>
+      <div class="stat-lbl">Wrong answers</div>
+    </div>
+    <div class="stat">
+      <div class="stat-val" style="color:var(--accent)">{{ time_taken // 60 }}m {{ time_taken % 60 }}s</div>
+      <div class="stat-lbl">Time taken</div>
+    </div>
+  </div>
+
+  <!-- Detailed Results -->
+  <div class="section-title">
+    📋 Detailed Review
+  </div>
+
+  {% for r in results %}
+  <div class="q-card {{ 'correct' if r.is_correct else 'wrong' }}">
+    <div class="q-header">
+      <div class="q-text">{{ loop.index }}. {{ r.question }}</div>
+      <span class="q-badge {{ 'badge-correct' if r.is_correct else 'badge-wrong' }}">
+        {{ '✓ CORRECT' if r.is_correct else '✗ WRONG' }}
+      </span>
+    </div>
+
+    <div class="options-grid">
+      {% for key, val in r.options.items() %}
+      <div class="opt
+        {% if key == r.correct_answer %}correct-opt
+        {% elif key == r.user_answer and not r.is_correct %}user-wrong
+        {% endif %}">
+        <span class="opt-key">{{ key }}.</span>
+        <span>{{ val }}</span>
+      </div>
+      {% endfor %}
+    </div>
+
+    {% if r.explanation %}
+    <div class="explanation">
+      <div class="exp-label">EXPLANATION</div>
+      {{ r.explanation }}
+    </div>
+    {% endif %}
+  </div>
+  {% endfor %}
+
+  <div class="action-row">
+    <a href="/start-exam" class="action-btn btn-primary">Retake Exam</a>
+    <a href="/leaderboard" class="action-btn btn-secondary">Leaderboard</a>
+    <a href="/dashboard" class="action-btn btn-secondary">Dashboard</a>
   </div>
 
 </div>
