@@ -1,1 +1,195 @@
 
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DevOps Exam — In Progress</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{--bg:#0a0e1a;--surface:#111827;--surface2:#162032;--border:#1e2d40;--accent:#00d4aa;--accent2:#3b82f6;--text:#e2e8f0;--muted:#64748b;--warn:#f59e0b;--danger:#f87171;--mono:'JetBrains Mono',monospace;--sans:'DM Sans',sans-serif;}
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{background:var(--bg);font-family:var(--sans);color:var(--text);min-height:100vh;}
+  .top-bar{position:sticky;top:0;z-index:100;background:rgba(10,14,26,0.95);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);padding:14px 32px;display:flex;align-items:center;justify-content:space-between;}
+  .exam-title{font-family:var(--mono);font-size:13px;color:var(--accent);}
+  .timer-wrap{display:flex;align-items:center;gap:10px;}
+  .timer-label{font-size:12px;color:var(--muted);font-family:var(--mono);}
+  .timer{font-family:var(--mono);font-size:22px;font-weight:600;color:var(--accent);min-width:68px;text-align:center;transition:color 0.3s;}
+  .timer.warn{color:var(--warn);}
+  .timer.danger{color:var(--danger);animation:blink 1s infinite;}
+  @keyframes blink{0%,100%{opacity:1}50%{opacity:0.5}}
+  .progress-bar{height:3px;background:var(--border);position:relative;}
+  .progress-fill{height:100%;background:var(--accent);transition:width 0.5s linear;}
+  .answered-count{font-size:12px;color:var(--muted);font-family:var(--mono);}
+  .container{max-width:800px;margin:0 auto;padding:32px 20px 80px;}
+  .q-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:28px 32px;margin-bottom:20px;animation:fadeIn 0.3s ease;transition:border-color 0.2s;}
+  .q-card.answered{border-color:rgba(0,212,170,0.25);}
+  @keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+  .q-header{display:flex;align-items:center;gap:12px;margin-bottom:18px;}
+  .q-num{font-family:var(--mono);font-size:11px;color:var(--muted);background:var(--surface2);padding:4px 10px;border-radius:6px;}
+  .q-cat{font-size:11px;color:var(--accent2);background:rgba(59,130,246,0.1);padding:4px 10px;border-radius:6px;font-family:var(--mono);}
+  .q-text{font-size:16px;line-height:1.6;color:var(--text);margin-bottom:20px;font-weight:400;}
+  .options{display:flex;flex-direction:column;gap:10px;}
+  .option{display:flex;align-items:center;gap:14px;padding:14px 18px;background:var(--bg);border:1.5px solid var(--border);border-radius:10px;cursor:pointer;transition:all 0.15s;user-select:none;}
+  .option:hover{border-color:var(--muted);background:var(--surface2);}
+  .option input[type=radio]{display:none;}
+  .option.selected{border-color:var(--accent);background:rgba(0,212,170,0.06);}
+  .opt-key{width:28px;height:28px;border-radius:6px;background:var(--surface2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:12px;font-weight:600;color:var(--muted);flex-shrink:0;transition:all 0.15s;}
+  .option.selected .opt-key{background:var(--accent);border-color:var(--accent);color:#0a0e1a;}
+  .opt-text{font-size:14px;color:var(--text);}
+  .sticky-footer{position:fixed;bottom:0;left:0;right:0;background:rgba(10,14,26,0.97);backdrop-filter:blur(12px);border-top:1px solid var(--border);padding:16px 32px;display:flex;align-items:center;justify-content:space-between;}
+  .answered-pills{display:flex;gap:6px;flex-wrap:wrap;}
+  .pill{width:28px;height:28px;border-radius:6px;border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:11px;color:var(--muted);cursor:pointer;transition:all 0.15s;}
+  .pill.done{background:rgba(0,212,170,0.15);border-color:rgba(0,212,170,0.4);color:var(--accent);}
+  .btn-submit{background:var(--accent);color:#0a0e1a;border:none;border-radius:10px;padding:12px 32px;font-family:var(--sans);font-size:15px;font-weight:700;cursor:pointer;transition:all 0.2s;}
+  .btn-submit:hover{background:#00f0c0;}
+  .btn-submit:disabled{opacity:0.5;cursor:not-allowed;}
+  .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:200;align-items:center;justify-content:center;}
+  .modal-overlay.show{display:flex;}
+  .modal{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:40px;max-width:400px;width:90%;text-align:center;}
+  .modal h3{font-size:22px;font-weight:600;margin-bottom:10px;}
+  .modal p{color:var(--muted);font-size:14px;margin-bottom:28px;line-height:1.6;}
+  .modal-btns{display:flex;gap:12px;justify-content:center;}
+  .btn-cancel{padding:12px 24px;border:1px solid var(--border);border-radius:8px;background:transparent;color:var(--text);font-family:var(--sans);font-size:14px;cursor:pointer;transition:all 0.15s;}
+  .btn-cancel:hover{background:var(--surface2);}
+  .btn-confirm{padding:12px 24px;background:var(--accent);border:none;border-radius:8px;color:#0a0e1a;font-family:var(--sans);font-size:14px;font-weight:700;cursor:pointer;transition:all 0.15s;}
+  .btn-confirm:hover{background:#00f0c0;}
+</style>
+</head>
+<body>
+
+<div class="top-bar">
+  <span class="exam-title">// DEVOPS CERTIFICATION EXAM</span>
+  <div class="timer-wrap">
+    <span class="timer-label">TIME LEFT</span>
+    <span class="timer" id="timer">20:00</span>
+  </div>
+  <span class="answered-count" id="answered-count">0 / {{ questions|length }} answered</span>
+</div>
+<div class="progress-bar">
+  <div class="progress-fill" id="progress-fill" style="width:100%"></div>
+</div>
+
+<div class="container">
+  <form method="POST" action="/submit-exam" id="exam-form">
+    {% for q in questions %}
+    <div class="q-card" id="card-{{ q.id }}">
+      <div class="q-header">
+        <span class="q-num">Q{{ loop.index }} of {{ questions|length }}</span>
+        <span class="q-cat">{{ q.category }}</span>
+      </div>
+      <div class="q-text">{{ q.question }}</div>
+      <div class="options">
+        {% set opts = q.options | tojson | fromjson %}
+        {% for key, val in opts.items() %}
+        <label class="option" id="opt-{{ q.id }}-{{ key }}">
+          <input type="radio" name="q_{{ q.id }}" value="{{ key }}"
+            onchange="selectOption({{ q.id }}, '{{ key }}')">
+          <span class="opt-key">{{ key }}</span>
+          <span class="opt-text">{{ val }}</span>
+        </label>
+        {% endfor %}
+      </div>
+    </div>
+    {% endfor %}
+  </form>
+</div>
+
+<div class="sticky-footer">
+  <div class="answered-pills" id="pills">
+    {% for q in questions %}
+    <div class="pill" id="pill-{{ loop.index }}" onclick="scrollToQ({{ q.id }})">{{ loop.index }}</div>
+    {% endfor %}
+  </div>
+  <button class="btn-submit" id="submit-btn" onclick="confirmSubmit()">
+    Submit Exam &rarr;
+  </button>
+</div>
+
+<!-- Confirm modal -->
+<div class="modal-overlay" id="modal">
+  <div class="modal">
+    <h3 id="modal-title">Submit exam?</h3>
+    <p id="modal-msg">You have answered <strong id="modal-ans">0</strong> of {{ questions|length }} questions. Are you sure you want to submit?</p>
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closeModal()">Keep reviewing</button>
+      <button class="btn-confirm" onclick="submitExam()">Submit now</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const TOTAL_SECS = {{ duration }} * 60;
+const TOTAL_QS   = {{ questions|length }};
+let answered     = {};
+let secondsLeft  = TOTAL_SECS;
+
+function selectOption(qid, key) {
+  answered[qid] = key;
+  document.querySelectorAll(`[id^="opt-${qid}-"]`).forEach(el => el.classList.remove('selected'));
+  document.getElementById(`opt-${qid}-${key}`).classList.add('selected');
+  document.getElementById(`card-${qid}`).classList.add('answered');
+  updateProgress();
+}
+
+function updateProgress() {
+  const count = Object.keys(answered).length;
+  document.getElementById('answered-count').textContent = `${count} / ${TOTAL_QS} answered`;
+  {% for q in questions %}
+  if (answered[{{ q.id }}]) {
+    document.getElementById('pill-{{ loop.index }}').classList.add('done');
+  }
+  {% endfor %}
+}
+
+function scrollToQ(qid) {
+  document.getElementById(`card-${qid}`).scrollIntoView({behavior:'smooth', block:'center'});
+}
+
+function confirmSubmit() {
+  const count = Object.keys(answered).length;
+  const unanswered = TOTAL_QS - count;
+  document.getElementById('modal-ans').textContent = count;
+  if (unanswered > 0) {
+    document.getElementById('modal-title').textContent = `${unanswered} unanswered question${unanswered > 1 ? 's' : ''}!`;
+    document.getElementById('modal-msg').innerHTML = `You have only answered <strong>${count} of ${TOTAL_QS}</strong> questions. Unanswered questions will be marked incorrect. Submit anyway?`;
+  } else {
+    document.getElementById('modal-title').textContent = 'Submit exam?';
+    document.getElementById('modal-msg').innerHTML = `You have answered all <strong>${TOTAL_QS}</strong> questions. Ready to submit?`;
+  }
+  document.getElementById('modal').classList.add('show');
+}
+
+function closeModal() {
+  document.getElementById('modal').classList.remove('show');
+}
+
+function submitExam() {
+  document.getElementById('exam-form').submit();
+}
+
+// Timer
+const timerEl   = document.getElementById('timer');
+const progressEl = document.getElementById('progress-fill');
+
+const ticker = setInterval(() => {
+  secondsLeft--;
+  const m = Math.floor(secondsLeft / 60).toString().padStart(2, '0');
+  const s = (secondsLeft % 60).toString().padStart(2, '0');
+  timerEl.textContent = `${m}:${s}`;
+  progressEl.style.width = ((secondsLeft / TOTAL_SECS) * 100) + '%';
+
+  if (secondsLeft <= 60)       timerEl.className = 'timer danger';
+  else if (secondsLeft <= 300) timerEl.className = 'timer warn';
+
+  if (secondsLeft <= 0) {
+    clearInterval(ticker);
+    document.getElementById('modal-title').textContent = 'Time is up!';
+    document.getElementById('modal-msg').innerHTML = 'Your 20 minutes are over. The exam will be submitted automatically.';
+    document.getElementById('modal').classList.add('show');
+    setTimeout(submitExam, 2000);
+  }
+}, 1000);
+</script>
+</body>
+</html>
