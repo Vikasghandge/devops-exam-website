@@ -44,20 +44,52 @@
   .history-section{animation:fadeUp 0.8s ease;}
   .history-section h3{font-size:16px;font-weight:500;color:var(--muted);font-family:var(--mono);letter-spacing:0.05em;margin-bottom:16px;}
   .history-table{background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;}
-  .table-head{display:grid;grid-template-columns:1fr 100px 100px 120px 100px;padding:14px 20px;border-bottom:1px solid var(--border);font-size:12px;font-family:var(--mono);color:var(--muted);text-transform:uppercase;letter-spacing:0.06em;}
-  .table-row{display:grid;grid-template-columns:1fr 100px 100px 120px 100px;padding:14px 20px;border-bottom:1px solid rgba(30,45,64,0.5);font-size:14px;transition:background 0.15s;}
+
+  /* ── Updated table columns to include certificate column ── */
+  .table-head{display:grid;grid-template-columns:1fr 100px 100px 120px 100px 130px;padding:14px 20px;border-bottom:1px solid var(--border);font-size:12px;font-family:var(--mono);color:var(--muted);text-transform:uppercase;letter-spacing:0.06em;}
+  .table-row{display:grid;grid-template-columns:1fr 100px 100px 120px 100px 130px;padding:14px 20px;border-bottom:1px solid rgba(30,45,64,0.5);font-size:14px;transition:background 0.15s;align-items:center;}
   .table-row:hover{background:var(--surface2);}
   .table-row:last-child{border-bottom:none;}
+
   .score-badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:12px;font-weight:600;font-family:var(--mono);}
   .pass{background:rgba(0,212,170,0.12);color:var(--accent);}
   .fail{background:rgba(248,113,113,0.12);color:#f87171;}
   .avg{background:rgba(245,158,11,0.12);color:#f59e0b;}
   .empty{padding:40px;text-align:center;color:var(--muted);font-size:14px;}
+
+  /* ── Certificate button ── */
+  .cert-mini-btn{
+    text-decoration:none;
+    background:linear-gradient(135deg,rgba(212,175,55,0.15),rgba(212,175,55,0.08));
+    border:1px solid rgba(212,175,55,0.4);
+    color:#d4af37;
+    font-family:var(--mono);
+    font-size:11px;
+    font-weight:600;
+    padding:6px 12px;
+    border-radius:8px;
+    letter-spacing:0.05em;
+    transition:all .2s;
+    white-space:nowrap;
+    display:inline-block;
+  }
+  .cert-mini-btn:hover{
+    background:rgba(212,175,55,0.22);
+    box-shadow:0 4px 16px rgba(212,175,55,0.2);
+    transform:translateY(-1px);
+  }
+  .no-cert{
+    font-size:11px;
+    color:var(--muted);
+    font-family:var(--mono);
+    opacity:0.5;
+  }
+
   @media(max-width:600px){
     nav{padding:16px 20px;}
     .stats-grid{grid-template-columns:1fr;}
     .exam-info{flex-direction:column;align-items:center;gap:12px;}
-    .table-head,.table-row{grid-template-columns:1fr 80px 80px;}
+    .table-head,.table-row{grid-template-columns:1fr 80px 80px 100px;}
     .th-time,.td-time,.th-date,.td-date{display:none;}
   }
 </style>
@@ -117,6 +149,11 @@
         <span class="chip-label">Pass mark:</span>
         <span class="chip-val">60%</span>
       </div>
+      <div class="info-chip">
+        <span class="chip-icon">🏆</span>
+        <span class="chip-label">Certificate:</span>
+        <span class="chip-val">85%+</span>
+      </div>
     </div>
     <a href="/start-exam" class="btn-start">Start Exam &rarr;</a>
   </div>
@@ -131,6 +168,7 @@
         <span>Result</span>
         <span class="th-time">Time taken</span>
         <span class="th-date">Date</span>
+        <span>Certificate</span>
       </div>
       {% for h in history %}
       <div class="table-row">
@@ -147,6 +185,15 @@
         <span class="td-date" style="color:var(--muted);font-size:13px;">
           {{ h.taken_at.strftime('%d %b') if h.taken_at else '—' }}
         </span>
+        <!-- ── Certificate column ── -->
+        <span>
+          {% if h.percentage >= 85 %}
+          <a href="/certificate?score={{ h.score }}&total={{ h.total }}&percentage={{ h.percentage|int }}&time_taken={{ h.time_taken or 0 }}"
+             class="cert-mini-btn">🏆 Certificate</a>
+          {% else %}
+          <span class="no-cert">Need 85%</span>
+          {% endif %}
+        </span>
       </div>
       {% endfor %}
       {% else %}
@@ -154,6 +201,7 @@
       {% endif %}
     </div>
   </div>
+
 </div>
 </body>
 </html>
