@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DevOps Exam Portal — Leaderboard</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0a0e1a;--surface:#111827;--surface2:#162032;
+    --border:#1e2d40;--accent:#00d4aa;--accent2:#3b82f6;
+    --text:#e2e8f0;--muted:#64748b;
+    --gold:#f59e0b;--silver:#94a3b8;--bronze:#b45309;
+    --mono:'JetBrains Mono',monospace;--sans:'DM Sans',sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{background:var(--bg);font-family:var(--sans);min-height:100vh;color:var(--text);}
+  body::before{content:'';position:fixed;top:0;left:0;right:0;height:300px;
+    background:radial-gradient(ellipse at 50% 0%,rgba(0,212,170,0.07) 0%,transparent 70%);
+    pointer-events:none;}
+
+  nav{display:flex;align-items:center;justify-content:space-between;
+    padding:20px 40px;border-bottom:1px solid var(--border);position:relative;z-index:10;}
+  .nav-brand{font-family:var(--mono);font-size:14px;color:var(--accent);}
+  .nav-links{display:flex;gap:10px;}
+  .nav-link{text-decoration:none;font-size:13px;padding:7px 16px;
+    border:1px solid var(--border);border-radius:8px;color:var(--muted);
+    transition:all 0.2s;font-family:var(--mono);}
+  .nav-link:hover{color:var(--text);border-color:var(--muted);}
+  .nav-link.active{background:var(--accent);color:#0a0e1a;border-color:var(--accent);font-weight:600;}
+
+  .container{max-width:900px;margin:0 auto;padding:40px 20px 80px;}
+
+  .hero{text-align:center;margin-bottom:40px;animation:fadeUp 0.5s ease;}
+  @keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+  .hero-badge{display:inline-block;background:rgba(245,158,11,0.12);
+    border:1px solid rgba(245,158,11,0.3);color:var(--gold);
+    font-family:var(--mono);font-size:11px;padding:4px 14px;
+    border-radius:20px;margin-bottom:16px;letter-spacing:0.06em;}
+  .hero h2{font-size:30px;font-weight:600;letter-spacing:-0.5px;margin-bottom:8px;}
+  .hero h2 span{color:var(--accent);}
+  .hero p{color:var(--muted);font-size:15px;}
+
+  .stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:36px;
+    animation:fadeUp 0.6s ease;}
+  .stat-card{background:var(--surface);border:1px solid var(--border);
+    border-radius:12px;padding:20px;text-align:center;}
+  .stat-val{font-size:28px;font-weight:600;font-family:var(--mono);margin-bottom:4px;}
+  .stat-label{font-size:12px;color:var(--muted);}
+  .c-gold{color:var(--gold);}
+  .c-teal{color:var(--accent);}
+  .c-blue{color:var(--accent2);}
+
+  .tabs{display:flex;gap:8px;margin-bottom:20px;}
+  .tab{padding:8px 18px;border-radius:8px;border:1px solid var(--border);
+    font-size:13px;font-weight:500;cursor:pointer;color:var(--muted);
+    background:transparent;transition:all .15s;font-family:var(--mono);}
+  .tab:hover{background:var(--surface);}
+  .tab.active{background:var(--accent);color:#0a0e1a;border-color:var(--accent);}
+
+  .board{background:var(--surface);border:1px solid var(--border);
+    border-radius:16px;overflow:hidden;animation:fadeUp 0.7s ease;}
+
+  .board-head{display:grid;grid-template-columns:60px 1fr 110px 110px 110px 90px;
+    padding:14px 20px;background:var(--surface2);
+    border-bottom:1px solid var(--border);
+    font-size:11px;font-family:var(--mono);color:var(--muted);
+    text-transform:uppercase;letter-spacing:0.07em;gap:0;}
+
+  .board-row{display:grid;grid-template-columns:60px 1fr 110px 110px 110px 90px;
+    padding:16px 20px;border-bottom:1px solid rgba(30,45,64,0.6);
+    align-items:center;transition:background .15s;gap:0;}
+  .board-row:hover{background:var(--surface2);}
+  .board-row:last-child{border-bottom:none;}
+  .board-row.me{background:rgba(0,212,170,0.05);border-left:3px solid var(--accent);}
+
+  .rank{display:flex;align-items:center;justify-content:center;}
+  .rank-badge{width:32px;height:32px;border-radius:50%;display:flex;
+    align-items:center;justify-content:center;
+    font-family:var(--mono);font-size:13px;font-weight:600;}
+  .rank-1{background:rgba(245,158,11,0.15);color:var(--gold);border:1.5px solid rgba(245,158,11,0.4);}
+  .rank-2{background:rgba(148,163,184,0.15);color:var(--silver);border:1.5px solid rgba(148,163,184,0.4);}
+  .rank-3{background:rgba(180,83,9,0.15);color:var(--bronze);border:1.5px solid rgba(180,83,9,0.4);}
+  .rank-n{background:var(--surface2);color:var(--muted);border:1px solid var(--border);}
+
+  .user-info{display:flex;align-items:center;gap:12px;}
+  .avatar{width:34px;height:34px;border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    font-size:13px;font-weight:600;color:#0a0e1a;flex-shrink:0;}
+  .av-1{background:linear-gradient(135deg,#f59e0b,#d97706);}
+  .av-2{background:linear-gradient(135deg,#94a3b8,#64748b);}
+  .av-3{background:linear-gradient(135deg,#b45309,#92400e);}
+  .av-n{background:linear-gradient(135deg,var(--accent),var(--accent2));}
+  .user-name{font-size:14px;font-weight:500;color:var(--text);}
+  .user-sub{font-size:11px;color:var(--muted);}
+  .me-tag{font-size:10px;background:rgba(0,212,170,0.12);color:var(--accent);
+    padding:2px 7px;border-radius:8px;margin-left:6px;font-family:var(--mono);}
+
+  .score-cell{font-size:14px;font-weight:500;font-family:var(--mono);}
+  .pct-badge{display:inline-block;padding:3px 10px;border-radius:12px;
+    font-size:12px;font-weight:600;font-family:var(--mono);}
+  .pct-high{background:rgba(0,212,170,0.12);color:var(--accent);}
+  .pct-mid{background:rgba(245,158,11,0.12);color:var(--gold);}
+  .pct-low{background:rgba(248,113,113,0.12);color:#f87171;}
+
+  .time-cell{font-size:13px;color:var(--muted);font-family:var(--mono);}
+  .time-fast{color:var(--accent);}
+
+  .attempts-cell{font-size:13px;color:var(--muted);font-family:var(--mono);}
+
+  .empty{padding:60px;text-align:center;color:var(--muted);}
+  .empty-title{font-size:18px;font-weight:500;margin-bottom:8px;color:var(--text);}
+  .empty-sub{font-size:14px;}
+
+  .your-rank-box{background:var(--surface);border:1px solid rgba(0,212,170,0.3);
+    border-radius:12px;padding:20px 24px;margin-top:20px;
+    display:flex;align-items:center;justify-content:space-between;
+    animation:fadeUp 0.8s ease;}
+  .yr-left{display:flex;align-items:center;gap:12px;}
+  .yr-label{font-size:13px;color:var(--muted);}
+  .yr-rank{font-size:24px;font-weight:600;font-family:var(--mono);color:var(--accent);}
+  .yr-right{text-align:right;}
+  .yr-score{font-size:20px;font-weight:600;font-family:var(--mono);color:var(--text);}
+  .yr-sub{font-size:12px;color:var(--muted);}
+
+  .crown{font-size:18px;}
+
+  @media(max-width:640px){
+    nav{padding:16px 20px;}
+    .board-head,.board-row{grid-template-columns:44px 1fr 80px 80px;}
+    .bh-attempts,.bd-attempts,.bh-speed,.bd-speed{display:none;}
+    .hero h2{font-size:22px;}
+    .stats-row{grid-template-columns:1fr 1fr;}
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-brand">// DEVOPS EXAM PORTAL</div>
+  <div class="nav-links">
+    <a href="/dashboard" class="nav-link">Dashboard</a>
+    <a href="/leaderboard" class="nav-link active">Leaderboard</a>
+    <a href="/start-exam" class="nav-link" style="background:var(--accent);color:#0a0e1a;border-color:var(--accent);font-weight:600;">Start Exam</a>
+  </div>
+</nav>
+
+<div class="container">
+
+  <div class="hero">
+    <div class="hero-badge">GLOBAL LEADERBOARD</div>
+    <h2>Top <span>DevOps</span> performers</h2>
+    <p>Ranked by best score — ties broken by fastest completion time</p>
+  </div>
+
+  <div class="stats-row">
+    <div class="stat-card">
+      <div class="stat-val c-gold">{{ total_players }}</div>
+      <div class="stat-label">Total players</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-val c-teal">{{ total_exams }}</div>
+      <div class="stat-label">Exams completed</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-val c-blue">
+        {% if top_score %}{{ top_score }}%{% else %}—{% endif %}
+      </div>
+      <div class="stat-label">Highest score ever</div>
+    </div>
+  </div>
+
+  {% if leaderboard %}
+  <div class="board">
+    <div class="board-head">
+      <span>Rank</span>
+      <span>Player</span>
+      <span>Best score</span>
+      <span>Percentage</span>
+      <span class="bh-speed">Fastest time</span>
+      <span class="bh-attempts">Attempts</span>
+    </div>
+
+    {% for row in leaderboard %}
+    {% set is_me = row.user_id == session.user_id %}
+    <div class="board-row {% if is_me %}me{% endif %}">
+
+      <div class="rank">
+        {% if loop.index == 1 %}
+        <div class="rank-badge rank-1">1</div>
+        {% elif loop.index == 2 %}
+        <div class="rank-badge rank-2">2</div>
+        {% elif loop.index == 3 %}
+        <div class="rank-badge rank-3">3</div>
+        {% else %}
+        <div class="rank-badge rank-n">{{ loop.index }}</div>
+        {% endif %}
+      </div>
+
+      <div class="user-info">
+        <div class="avatar
+          {% if loop.index == 1 %}av-1
+          {% elif loop.index == 2 %}av-2
+          {% elif loop.index == 3 %}av-3
+          {% else %}av-n{% endif %}">
+          {{ row.display_name[0] }}
+        </div>
+        <div>
+          <div class="user-name">
+            {{ row.display_name }}
+            {% if is_me %}<span class="me-tag">you</span>{% endif %}
+            {% if loop.index == 1 %}<span class="crown">👑</span>{% endif %}
+          </div>
+          <div class="user-sub">{{ row.attempts }} attempt{{ 's' if row.attempts != 1 else '' }}</div>
+        </div>
+      </div>
+
+      <div class="score-cell">
+        {{ row.best_score }}/{{ row.total }}
+      </div>
+
+      <div>
+        <span class="pct-badge
+          {% if row.best_pct >= 80 %}pct-high
+          {% elif row.best_pct >= 60 %}pct-mid
+          {% else %}pct-low{% endif %}">
+          {{ row.best_pct|int }}%
+        </span>
+      </div>
+
+      <div class="time-cell bd-speed
+        {% if row.fastest_time and row.fastest_time < 600 %}time-fast{% endif %}">
+        {% if row.fastest_time %}
+          {{ row.fastest_time // 60 }}m {{ row.fastest_time % 60 }}s
+        {% else %}
+          —
+        {% endif %}
+      </div>
+
+      <div class="attempts-cell bd-attempts">{{ row.attempts }}</div>
+
+    </div>
+    {% endfor %}
+  </div>
+
+  {% if my_rank %}
+  <div class="your-rank-box">
+    <div class="yr-left">
+      <div class="avatar av-n" style="width:42px;height:42px;font-size:15px;">
+        {{ session.username[0] }}
+      </div>
+      <div>
+        <div class="yr-label">Your global rank</div>
+        <div class="yr-rank">#{{ my_rank }}</div>
+      </div>
+    </div>
+    <div class="yr-right">
+      <div class="yr-score">{{ my_best_pct|int }}%</div>
+      <div class="yr-sub">your best score</div>
+    </div>
+  </div>
+  {% endif %}
+
+  {% else %}
+  <div class="board">
+    <div class="empty">
+      <div class="empty-title">No scores yet</div>
+      <div class="empty-sub">Be the first to complete an exam and claim the top spot!</div>
+    </div>
+  </div>
+  {% endif %}
+
+</div>
+</body>
+</html>
