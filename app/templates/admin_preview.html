@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Question Preview — Admin</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{--bg:#0a0e1a;--surface:#111827;--surface2:#162032;--border:#1e2d40;
+    --accent:#f59e0b;--teal:#00d4aa;--text:#e2e8f0;--muted:#64748b;
+    --mono:'JetBrains Mono',monospace;--sans:'DM Sans',sans-serif;}
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{background:var(--bg);font-family:var(--sans);min-height:100vh;color:var(--text);
+    display:flex;flex-direction:column;}
+  nav{display:flex;align-items:center;justify-content:space-between;
+    padding:18px 36px;border-bottom:1px solid var(--border);}
+  .nav-brand{font-family:var(--mono);font-size:13px;color:var(--accent);}
+  .nav-btn{text-decoration:none;font-size:12px;padding:6px 14px;
+    border:1px solid var(--border);border-radius:7px;color:var(--muted);
+    transition:all .2s;font-family:var(--mono);}
+  .nav-btn:hover{color:var(--text);border-color:var(--muted);}
+  .nav-btn.edit{color:var(--teal);border-color:rgba(0,212,170,0.3);}
+  .container{max-width:700px;margin:0 auto;padding:40px 20px;flex:1;}
+  .preview-label{text-align:center;margin-bottom:24px;}
+  .preview-badge{display:inline-block;background:rgba(245,158,11,0.1);
+    border:1px solid rgba(245,158,11,0.25);color:var(--accent);
+    font-family:var(--mono);font-size:11px;padding:4px 14px;
+    border-radius:20px;letter-spacing:0.06em;}
+  .q-card{background:var(--surface);border:1px solid var(--border);
+    border-radius:14px;padding:28px 32px;animation:fadeUp .4s ease;}
+  @keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+  .q-meta{display:flex;align-items:center;gap:10px;margin-bottom:18px;}
+  .q-num{font-family:var(--mono);font-size:11px;color:var(--muted);
+    background:var(--surface2);padding:3px 10px;border-radius:6px;}
+  .cat-pill{font-size:11px;font-weight:500;padding:3px 10px;
+    border-radius:8px;font-family:var(--mono);}
+  .q-text{font-size:16px;line-height:1.65;color:var(--text);margin-bottom:20px;font-weight:400;}
+  .options{display:flex;flex-direction:column;gap:10px;margin-bottom:20px;}
+  .opt{display:flex;align-items:center;gap:14px;padding:13px 16px;
+    border:1.5px solid var(--border);border-radius:10px;font-size:14px;}
+  .opt.correct{border-color:var(--teal);background:rgba(0,212,170,0.06);}
+  .opt-key{width:28px;height:28px;border-radius:6px;background:var(--surface2);
+    border:1px solid var(--border);display:flex;align-items:center;justify-content:center;
+    font-family:var(--mono);font-size:12px;font-weight:600;color:var(--muted);flex-shrink:0;}
+  .opt.correct .opt-key{background:rgba(0,212,170,0.2);border-color:var(--teal);color:var(--teal);}
+  .opt-text{color:var(--text);}
+  .correct-tag{margin-left:auto;font-size:10px;font-weight:600;font-family:var(--mono);
+    padding:2px 8px;border-radius:6px;background:rgba(0,212,170,0.12);color:var(--teal);}
+  .explanation{background:rgba(59,130,246,0.06);border:1px solid rgba(59,130,246,0.15);
+    border-radius:8px;padding:14px 16px;font-size:13px;color:#93c5fd;line-height:1.65;}
+  .expl-label{font-family:var(--mono);font-size:10px;color:#60a5fa;
+    letter-spacing:0.08em;margin-bottom:6px;}
+  .actions{display:flex;gap:10px;justify-content:center;margin-top:24px;}
+  .act-btn{text-decoration:none;padding:10px 24px;border-radius:8px;
+    font-size:14px;font-weight:500;transition:all .15s;}
+  .act-edit{background:var(--teal);color:#0a0e1a;}
+  .act-edit:hover{background:#00f0c0;}
+  .act-back{background:transparent;border:1px solid var(--border);color:var(--muted);}
+  .act-back:hover{color:var(--text);border-color:var(--muted);}
+  .not-found{text-align:center;padding:60px;color:var(--muted);}
+</style>
+</head>
+<body>
+<nav>
+  <div class="nav-brand">// QUESTION PREVIEW</div>
+  <div style="display:flex;gap:8px;">
+    {% if q %}<a href="/admin/edit/{{ q.id }}" class="nav-btn edit">Edit this question</a>{% endif %}
+    <a href="/admin" class="nav-btn">← All questions</a>
+  </div>
+</nav>
+
+<div class="container">
+  {% if q %}
+  <div class="preview-label">
+    <div class="preview-badge">STUDENT VIEW — Question #{{ q.id }}</div>
+  </div>
+
+  <div class="q-card">
+    <div class="q-meta">
+      <span class="q-num">Question #{{ q.id }}</span>
+      <span class="cat-pill"
+        style="background:rgba(245,158,11,0.12);color:var(--accent);">
+        {{ q.category }}
+      </span>
+    </div>
+
+    <div class="q-text">{{ q.question }}</div>
+
+    <div class="options">
+      {% for key, val in q.options.items() %}
+      <div class="opt {% if key == q.correct_answer %}correct{% endif %}">
+        <span class="opt-key">{{ key }}</span>
+        <span class="opt-text">{{ val }}</span>
+        {% if key == q.correct_answer %}
+        <span class="correct-tag">CORRECT</span>
+        {% endif %}
+      </div>
+      {% endfor %}
+    </div>
+
+    {% if q.explanation %}
+    <div class="explanation">
+      <div class="expl-label">EXPLANATION</div>
+      {{ q.explanation }}
+    </div>
+    {% endif %}
+  </div>
+
+  <div class="actions">
+    <a href="/admin" class="act-btn act-back">← Back to list</a>
+    <a href="/admin/edit/{{ q.id }}" class="act-btn act-edit">Edit question</a>
+  </div>
+
+  {% else %}
+  <div class="not-found">Question not found.</div>
+  {% endif %}
+</div>
+</body>
+</html>
