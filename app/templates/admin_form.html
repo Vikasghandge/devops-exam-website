@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{% if mode == 'add' %}Add Question{% else %}Edit Question{% endif %} — Admin</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{--bg:#0a0e1a;--surface:#111827;--surface2:#162032;--border:#1e2d40;
+    --accent:#f59e0b;--teal:#00d4aa;--text:#e2e8f0;--muted:#64748b;
+    --error:#f87171;--success:#34d399;
+    --mono:'JetBrains Mono',monospace;--sans:'DM Sans',sans-serif;}
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{background:var(--bg);font-family:var(--sans);min-height:100vh;color:var(--text);}
+  nav{display:flex;align-items:center;justify-content:space-between;
+    padding:18px 36px;border-bottom:1px solid var(--border);}
+  .nav-brand{font-family:var(--mono);font-size:13px;color:var(--accent);}
+  .nav-btn{text-decoration:none;font-size:12px;padding:6px 14px;
+    border:1px solid var(--border);border-radius:7px;color:var(--muted);
+    transition:all .2s;font-family:var(--mono);}
+  .nav-btn:hover{color:var(--text);border-color:var(--muted);}
+  .container{max-width:900px;margin:0 auto;padding:32px 20px 60px;}
+  .page-title{font-size:22px;font-weight:600;margin-bottom:4px;}
+  .page-sub{font-size:14px;color:var(--muted);margin-bottom:28px;}
+
+  .layout{display:grid;grid-template-columns:1fr 380px;gap:20px;align-items:start;}
+
+  .form-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:28px;}
+  .preview-card{background:var(--surface);border:1px solid var(--border);
+    border-radius:14px;padding:24px;position:sticky;top:20px;}
+
+  .field{margin-bottom:20px;}
+  .field-label{display:block;font-size:12px;font-family:var(--mono);color:var(--muted);
+    text-transform:uppercase;letter-spacing:0.08em;margin-bottom:8px;}
+  .field-hint{font-size:11px;color:var(--muted);margin-top:5px;}
+
+  textarea,input[type=text],select{width:100%;background:var(--bg);
+    border:1px solid var(--border);border-radius:8px;
+    padding:11px 14px;color:var(--text);font-family:var(--sans);
+    font-size:14px;outline:none;transition:border-color .2s;resize:vertical;}
+  textarea:focus,input[type=text]:focus,select:focus{
+    border-color:var(--accent);box-shadow:0 0 0 3px rgba(245,158,11,0.08);}
+  textarea::placeholder,input::placeholder{color:var(--muted);}
+  select option{background:var(--surface);}
+
+  .options-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  .opt-field{position:relative;}
+  .opt-key{position:absolute;left:12px;top:50%;transform:translateY(-50%);
+    font-family:var(--mono);font-size:12px;font-weight:600;color:var(--muted);
+    pointer-events:none;}
+  .opt-field input{padding-left:32px;}
+  .opt-field.correct-opt input{border-color:var(--teal);}
+  .opt-field.correct-opt .opt-key{color:var(--teal);}
+
+  .correct-row{display:flex;gap:10px;}
+  .correct-btn{flex:1;padding:10px;border:1.5px solid var(--border);border-radius:8px;
+    background:var(--bg);color:var(--muted);font-family:var(--mono);font-size:14px;
+    font-weight:600;cursor:pointer;transition:all .15s;text-align:center;}
+  .correct-btn:hover{border-color:var(--teal);color:var(--teal);}
+  .correct-btn.selected{border-color:var(--teal);background:rgba(0,212,170,0.1);color:var(--teal);}
+
+  .alert-error{background:rgba(248,113,113,0.1);border:1px solid rgba(248,113,113,0.3);
+    color:var(--error);padding:12px 16px;border-radius:8px;font-size:13px;margin-bottom:18px;}
+  .alert-success{background:rgba(52,211,153,0.1);border:1px solid rgba(52,211,153,0.3);
+    color:var(--success);padding:12px 16px;border-radius:8px;font-size:13px;margin-bottom:18px;}
+
+  .form-footer{display:flex;gap:10px;margin-top:24px;padding-top:20px;
+    border-top:1px solid var(--border);}
+  .btn-save{flex:1;background:var(--accent);color:#0a0e1a;border:none;border-radius:8px;
+    padding:13px;font-family:var(--sans);font-size:15px;font-weight:700;cursor:pointer;
+    transition:all .2s;}
+  .btn-save:hover{background:#fbbf24;}
+  .btn-cancel{padding:13px 22px;border:1px solid var(--border);border-radius:8px;
+    background:transparent;color:var(--muted);font-family:var(--sans);
+    text-decoration:none;display:flex;align-items:center;transition:all .15s;}
+  .btn-cancel:hover{color:var(--text);border-color:var(--muted);}
+
+  .preview-title{font-size:13px;font-weight:500;color:var(--muted);
+    font-family:var(--mono);letter-spacing:0.05em;margin-bottom:16px;
+    display:flex;align-items:center;gap:8px;}
+  .preview-dot{width:6px;height:6px;border-radius:50%;background:var(--teal);
+    animation:pulse 2s infinite;}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.3}}
+  .preview-q{font-size:14px;color:var(--text);line-height:1.6;margin-bottom:16px;
+    min-height:40px;}
+  .preview-opts{display:flex;flex-direction:column;gap:8px;margin-bottom:16px;}
+  .prev-opt{padding:10px 14px;border-radius:8px;border:1px solid var(--border);
+    font-size:13px;color:var(--text);display:flex;gap:10px;align-items:center;
+    background:var(--bg);}
+  .prev-opt.correct{border-color:var(--teal);background:rgba(0,212,170,0.06);color:var(--teal);}
+  .prev-opt-key{font-family:var(--mono);font-size:12px;font-weight:600;
+    width:22px;height:22px;border-radius:5px;background:var(--surface2);
+    display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+  .prev-opt.correct .prev-opt-key{background:rgba(0,212,170,0.2);color:var(--teal);}
+  .prev-expl{background:rgba(59,130,246,0.06);border:1px solid rgba(59,130,246,0.15);
+    border-radius:8px;padding:10px 14px;font-size:12px;color:#93c5fd;line-height:1.6;}
+  .prev-expl-label{font-size:10px;font-family:var(--mono);color:#60a5fa;
+    letter-spacing:0.08em;margin-bottom:4px;}
+  .cat-badge{display:inline-block;font-size:11px;font-weight:500;padding:3px 10px;
+    border-radius:8px;font-family:var(--mono);margin-bottom:12px;}
+
+  @media(max-width:700px){.layout{grid-template-columns:1fr;}.preview-card{position:static;}}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-brand">// ADMIN PANEL — {% if mode == 'add' %}NEW QUESTION{% else %}EDIT QUESTION #{{ qid }}{% endif %}</div>
+  <div style="display:flex;gap:8px;">
+    <a href="/admin" class="nav-btn">← All questions</a>
+  </div>
+</nav>
+
+<div class="container">
+  <div class="page-title">{% if mode == 'add' %}Add new question{% else %}Edit question{% endif %}</div>
+  <div class="page-sub">{% if mode == 'add' %}Create a new MCQ question for the exam{% else %}Update this question's content, options, or answer{% endif %}</div>
+
+  <div class="layout">
+    <!-- LEFT: Form -->
+    <div class="form-card">
+
+      {% if error %}<div class="alert-error">{{ error }}</div>{% endif %}
+      {% if success %}<div class="alert-success">{{ success }} <a href="/admin" style="color:var(--success);font-weight:600;">Back to list →</a></div>{% endif %}
+
+      <form method="POST" id="qForm">
+
+        <div class="field">
+          <label class="field-label">Question text *</label>
+          <textarea name="question" id="qText" rows="3"
+            placeholder="e.g. Which command shows running Docker containers only?"
+            oninput="updatePreview()" required>{{ q.question if q else '' }}</textarea>
+        </div>
+
+        <div class="field">
+          <label class="field-label">Answer options *</label>
+          <div class="options-grid">
+            <div class="opt-field" id="field_A">
+              <span class="opt-key">A</span>
+              <input type="text" name="opt_a" id="optA"
+                placeholder="Option A"
+                value="{{ q.options.A if q else '' }}"
+                oninput="updatePreview()" required>
+            </div>
+            <div class="opt-field" id="field_B">
+              <span class="opt-key">B</span>
+              <input type="text" name="opt_b" id="optB"
+                placeholder="Option B"
+                value="{{ q.options.B if q else '' }}"
+                oninput="updatePreview()" required>
+            </div>
+            <div class="opt-field" id="field_C">
+              <span class="opt-key">C</span>
+              <input type="text" name="opt_c" id="optC"
+                placeholder="Option C"
+                value="{{ q.options.C if q else '' }}"
+                oninput="updatePreview()" required>
+            </div>
+            <div class="opt-field" id="field_D">
+              <span class="opt-key">D</span>
+              <input type="text" name="opt_d" id="optD"
+                placeholder="Option D"
+                value="{{ q.options.D if q else '' }}"
+                oninput="updatePreview()" required>
+            </div>
+          </div>
+        </div>
+
+        <div class="field">
+          <label class="field-label">Correct answer *</label>
+          <input type="hidden" name="correct" id="correctInput"
+            value="{{ q.correct_answer if q else '' }}">
+          <div class="correct-row">
+            {% for opt in ['A','B','C','D'] %}
+            <button type="button" class="correct-btn {% if q and q.correct_answer == opt %}selected{% endif %}"
+              id="cbtn_{{ opt }}" onclick="selectCorrect('{{ opt }}')">{{ opt }}</button>
+            {% endfor %}
+          </div>
+          <div class="field-hint">Click to select which option is the correct answer</div>
+        </div>
+
+        <div class="field">
+          <label class="field-label">Category</label>
+          <select name="category" id="catSelect" onchange="updatePreview()">
+            {% for cat in ['Docker','Kubernetes','Terraform','AWS','Ansible','DevOps'] %}
+            <option value="{{ cat }}"
+              {% if q and q.category == cat %}selected{% endif %}>{{ cat }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="field">
+          <label class="field-label">Explanation <span style="color:var(--muted);font-weight:400">(optional but recommended)</span></label>
+          <textarea name="explanation" id="qExpl" rows="3"
+            placeholder="Explain why this answer is correct — helps students learn"
+            oninput="updatePreview()">{{ q.explanation if q else '' }}</textarea>
+        </div>
+
+        <div class="form-footer">
+          <a href="/admin" class="btn-cancel">Cancel</a>
+          <button type="submit" class="btn-save">
+            {% if mode == 'add' %}Save question →{% else %}Update question →{% endif %}
+          </button>
+        </div>
+
+      </form>
+    </div>
+
+    <!-- RIGHT: Live Preview -->
+    <div class="preview-card">
+      <div class="preview-title">
+        <div class="preview-dot"></div>
+        Live preview
+      </div>
+      <div id="prevCat" class="cat-badge" style="background:rgba(245,158,11,0.12);color:var(--accent);">DevOps</div>
+      <div class="preview-q" id="prevQ">Your question will appear here as you type...</div>
+      <div class="preview-opts" id="prevOpts">
+        <div class="prev-opt"><span class="prev-opt-key">A</span><span>Option A</span></div>
+        <div class="prev-opt"><span class="prev-opt-key">B</span><span>Option B</span></div>
+        <div class="prev-opt"><span class="prev-opt-key">C</span><span>Option C</span></div>
+        <div class="prev-opt"><span class="prev-opt-key">D</span><span>Option D</span></div>
+      </div>
+      <div id="prevExplWrap" style="display:none;">
+        <div class="prev-expl">
+          <div class="prev-expl-label">EXPLANATION</div>
+          <div id="prevExpl"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+let selectedCorrect = '{{ q.correct_answer if q else "" }}';
+
+function selectCorrect(opt) {
+  selectedCorrect = opt;
+  document.getElementById('correctInput').value = opt;
+  ['A','B','C','D'].forEach(o => {
+    const btn   = document.getElementById(`cbtn_${o}`);
+    const field = document.getElementById(`field_${o}`);
+    btn.classList.toggle('selected', o === opt);
+    field.classList.toggle('correct-opt', o === opt);
+  });
+  updatePreview();
+}
+
+function updatePreview() {
+  const q    = document.getElementById('qText').value    || 'Your question will appear here...';
+  const a    = document.getElementById('optA').value     || 'Option A';
+  const b    = document.getElementById('optB').value     || 'Option B';
+  const c    = document.getElementById('optC').value     || 'Option C';
+  const d    = document.getElementById('optD').value     || 'Option D';
+  const expl = document.getElementById('qExpl').value;
+  const cat  = document.getElementById('catSelect').value;
+  const opts = { A: a, B: b, C: c, D: d };
+
+  document.getElementById('prevQ').textContent = q;
+  document.getElementById('prevCat').textContent = cat;
+
+  const catColors = {
+    Docker: 'rgba(59,130,246,0.12);color:#60a5fa',
+    Kubernetes: 'rgba(0,212,170,0.12);color:#00d4aa',
+    Terraform: 'rgba(148,103,189,0.15);color:#c084fc',
+    AWS: 'rgba(245,158,11,0.12);color:#f59e0b',
+    Ansible: 'rgba(248,113,113,0.12);color:#f87171',
+    DevOps: 'rgba(100,116,139,0.15);color:#94a3b8',
+  };
+  document.getElementById('prevCat').style.cssText =
+    `background:${(catColors[cat] || catColors.DevOps).split(';')[0]};` +
+    `color:${(catColors[cat] || catColors.DevOps).split('color:')[1]};` +
+    'display:inline-block;font-size:11px;font-weight:500;padding:3px 10px;border-radius:8px;font-family:var(--mono);margin-bottom:12px;';
+
+  let optsHtml = '';
+  ['A','B','C','D'].forEach(o => {
+    const isC = o === selectedCorrect;
+    optsHtml += `<div class="prev-opt ${isC ? 'correct' : ''}">
+      <span class="prev-opt-key">${o}</span>
+      <span>${opts[o]}</span>
+    </div>`;
+  });
+  document.getElementById('prevOpts').innerHTML = optsHtml;
+
+  if (expl) {
+    document.getElementById('prevExpl').textContent = expl;
+    document.getElementById('prevExplWrap').style.display = 'block';
+  } else {
+    document.getElementById('prevExplWrap').style.display = 'none';
+  }
+}
+
+// Init on page load
+document.addEventListener('DOMContentLoaded', () => {
+  if (selectedCorrect) selectCorrect(selectedCorrect);
+  updatePreview();
+  // highlight correct option fields
+  if (selectedCorrect) {
+    document.getElementById(`field_${selectedCorrect}`).classList.add('correct-opt');
+  }
+});
+</script>
+</body>
+</html>
