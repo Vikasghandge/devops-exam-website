@@ -1,6 +1,6 @@
 from flask import Flask, render_template, request, redirect, url_for, session, jsonify
-import pymysql, os, random, json
-from datetime import datetime, timedelta
+import pymysql, os, random, json, uuid
+from datetime import datetime, timedelta, date
 from functools import wraps
 
 app = Flask(__name__)
@@ -103,7 +103,7 @@ def dashboard():
         db = get_db()
         with db.cursor() as cur:
             cur.execute("""
-                SELECT score, total, percentage, taken_at
+                SELECT score, total, percentage, taken_at, time_taken
                 FROM results WHERE user_id=%s
                 ORDER BY taken_at DESC LIMIT 5
             """, (session['user_id'],))
@@ -301,7 +301,6 @@ def leaderboard():
     )
 
 
-
 # ── Admin config ──────────────────────────────────────────
 ADMIN_PASSWORD = os.environ.get('ADMIN_PASSWORD', 'admin@devops2024')
 
@@ -472,6 +471,36 @@ def admin_preview(qid):
     except Exception as e:
         q = None
     return render_template('admin_preview.html', q=q)
+
+
+# ── Certificate route ─────────────────────────────────────
+@app.route('/certificate')
+@login_required
+def certificate():
+    try:
+        score      = int(request.args.get('score', 0))
+        total      = int(request.args.get('total', 0))
+        percentage = float(request.args.get('percentage', 0))
+        time_taken = int(request.args.get('time_taken', 0))
+    except (ValueError, TypeError):
+        return redirect(url_for('dashboard'))
+
+    # Only allow if score >= 85%
+    if percentage < 85:
+        return redirect(url_for('dashboard'))
+
+    cert_id    = 'DEP-' + str(uuid.uuid4()).upper()[:8]
+    issue_date = date.today().strftime('%B %d, %Y')
+
+    return render_template('certificate.html',
+        username   = session.get('username', 'Candidate'),
+        score      = score,
+        total      = total,
+        percentage = int(percentage),
+        time_taken = time_taken,
+        cert_id    = cert_id,
+        issue_date = issue_date
+    )
 
 
 if __name__ == '__main__':
