@@ -17,7 +17,8 @@ devops-exam-app/
 │       ├── register.html   ← Registration page
 │       ├── dashboard.html  ← User dashboard
 │       ├── exam.html       ← Exam with countdown timer
-│       └── result.html     ← Result + answer review
+│       └── result.html
+    ← Result + answer review
 ├── mysql/
 │   └── init.sql            ← DB schema + 20 DevOps questions
 ├── docker-compose.yml      ← Two-container setup (app + db)
