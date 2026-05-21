@@ -1,0 +1,72 @@
+pipeline {
+
+    agent {
+        label 'dev-2'
+    }
+
+    environment {
+        COMPOSE_FILE = 'docker-compose.yml'
+    }
+
+    stages {
+
+        stage('Clone Repository') {
+            steps {
+                git branch: 'Admin_dashboard',
+                url: 'https://github.com/Vikasghandge/devops-exam-website.git'
+            }
+        }
+
+        stage('Check Docker & Compose') {
+            steps {
+                sh 'docker --version'
+                sh 'docker compose version'
+            }
+        }
+
+        stage('Build Docker Images') {
+            steps {
+                sh 'docker compose -f $COMPOSE_FILE build'
+            }
+        }
+
+        stage('Stop Old Containers') {
+            steps {
+                sh 'docker compose -f $COMPOSE_FILE down'
+            }
+        }
+
+        stage('Start Application') {
+            steps {
+                sh 'docker compose -f $COMPOSE_FILE up -d'
+            }
+        }
+
+        stage('Verify Running Containers') {
+            steps {
+                sh 'docker ps'
+            }
+        }
+
+        stage('Cleanup Unused Images') {
+            steps {
+                sh 'docker image prune -f'
+            }
+        }
+    }
+
+    post {
+
+        success {
+            echo 'Application deployed successfully!'
+        }
+
+        failure {
+            echo 'Pipeline failed!'
+        }
+
+        always {
+            echo 'Pipeline Execution Completed'
+        }
+    }
+}
